@@ -388,7 +388,7 @@ def gameplay():
                         gameOver = True
 
                     if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_SPACE:
+                        if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                             if playerDino.rect.bottom == int(0.98*height):
                                 playerDino.isJumping = True
                                 if pygame.mixer.get_init() != None:
