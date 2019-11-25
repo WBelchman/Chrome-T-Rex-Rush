@@ -1,20 +1,14 @@
 # T-Rex Rush 
 
-![](https://github.com/shivamshekhar/Chrome-T-Rex-Rush/raw/master/screenshot.png)
+# ![](https://github.com/shivamshekhar/Chrome-T-Rex-Rush/raw/master/screenshot.png)
 
-![](https://github.com/shivamshekhar/Chrome-T-Rex-Rush/raw/master/screenshot.gif)
+# ![](https://github.com/shivamshekhar/Chrome-T-Rex-Rush/raw/master/screenshot.gif)
 
 ### Description:
-A recreated version of the famous Chrome T-Rex in Python 
+RL agent for Chrome Dino game
 
 ### Technology:
 Built using pygame library
-
-### Version and Release:
-First Release, version 1.0
-
-### Target Platforms:
-Windows/Linux
 
 ### Instructions and Prerequisites:   
 To run this game:  
