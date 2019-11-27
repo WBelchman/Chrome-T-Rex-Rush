@@ -312,7 +312,7 @@ class Scoreboard():
             self.temprect.left += self.temprect.width
         self.temprect.left = 0
 
-def gameplay(iters, model):
+def gameplay(agent_queue):
     global high_score
     gamespeed = 4
     gameOver = False
@@ -321,7 +321,7 @@ def gameplay(iters, model):
     scb = Scoreboard()
     highsc = Scoreboard(width*0.78)
     iterscb = Scoreboard(width*0.5)
-    counter = 0
+    counter = 1
 
     cacti = pygame.sprite.Group()
     pteras = pygame.sprite.Group()
@@ -345,12 +345,29 @@ def gameplay(iters, model):
     HI_rect.top = height*0.1
     HI_rect.left = width*0.73
 
+    obstacles = []
+    action = 0
+
+    print("[*]Thread 2: Waiting for agent")
+    a, iters, last = agent_queue.get()
+    print("[*]Thread 2: Agent received")
+
     while not gameOver:
         
-        pygame.event.get() #This needs to be called for the surface to update?
+        pygame.event.get() #It looks like this needs to be called for the surface to update
 
-        if counter % 5 == 0:
-            action = model.choose_action(None) #add state
+        if counter % 20 == 0:
+
+            if len(obstacles) == 0: #Nothing to avoid (Consider action=0)
+                state = [147, 701]
+                action = a.choose_action(state) 
+            else:
+                last = obstacles[0].rect
+                state = [last.bottom, last.left]
+                action = a.choose_action(state)
+
+        else:
+            if action == 1: action = 0
 
         if action == 1:
                 if playerDino.rect.bottom == int(0.98*height):
@@ -381,19 +398,29 @@ def gameplay(iters, model):
 
         if len(cacti) < 2:
             if len(cacti) == 0:
+                c = Cactus(gamespeed,  40,  40)
                 last_obstacle.empty()
-                last_obstacle.add(Cactus(gamespeed, 40, 40))
+                last_obstacle.add(c)
+
+                obstacles.append(c)
+
             else:
                 for l in last_obstacle:
                     if l.rect.right < width*0.7 and random.randrange(0, 50) == 10:
+                        c = Cactus(gamespeed,  40,  40)
                         last_obstacle.empty()
-                        last_obstacle.add(Cactus(gamespeed,  40,  40))
+                        last_obstacle.add(c)
+
+                        obstacles.append(c)
 
         if len(pteras) == 0 and random.randrange(0, 200) == 10 and counter > 500:
             for l in last_obstacle:
                 if l.rect.right < width*0.8:
+                    p = Ptera(gamespeed,  46,  40)
                     last_obstacle.empty()
-                    last_obstacle.add(Ptera(gamespeed,  46,  40))
+                    last_obstacle.add()
+
+                    obstacles.append(p)
 
         if len(clouds) < 5 and random.randrange(0, 300) == 10:
             Cloud(width, random.randrange(height/5, height/2))
@@ -415,6 +442,7 @@ def gameplay(iters, model):
             if high_score != 0:
                 highsc.draw()
                 screen.blit(HI_image, HI_rect)
+            iterscb.draw()
             cacti.draw(screen)
             pteras.draw(screen)
             playerDino.draw()
@@ -433,6 +461,14 @@ def gameplay(iters, model):
 
         counter = (counter + 1)
 
+    if last: #agent is done training
+        print("[+]Thread 2: Flag received, exiting")
+        pygame.quit()
+        return False
 
-def run(iters, model):
-    while True: gameplay(iters, model)
+    return True
+
+
+def run(agent_queue):
+    flag = True
+    while flag: flag = gameplay(agent_queue)

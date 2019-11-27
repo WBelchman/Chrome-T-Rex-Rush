@@ -173,7 +173,7 @@ class game():
 
         for l in self.obstacles:
             if l.rect.right < 40:
-                self.last_obstacle.remove(l)
+                self.obstacles.remove(l)
 
                 if isinstance(l, Cactus):
                     self.num_cacti -= 1
@@ -189,8 +189,10 @@ class game():
 
         self.counter += 1
 
-        state = self.obstacles[0].rect.__str__() #String input for debugging
-
-        print(len(self.obstacles))
+        if len(self.obstacles) == 0:
+            state = [147, 701]
+        else:
+            last = self.obstacles[0].rect
+            state = [last.bottom, last.left]
 
         return state, reward, gameOver

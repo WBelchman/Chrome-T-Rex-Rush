@@ -9,9 +9,6 @@
 ### Description:
 RL agent for Chrome Dino game
 
-### Technology:
-Built using pygame library
-
 ### Instructions and Prerequisites:   
 To run this game:  
 * Make sure you have Python installed alongwith pygame (http://www.pygame.org/) library
