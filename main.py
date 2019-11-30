@@ -1,6 +1,4 @@
-# from multiprocessing import Process, Queue
-
-from threading import Thread
+from threading import Thread, Lock
 from queue import Queue
 
 from environ import game
@@ -8,18 +6,13 @@ from game import run
 from RL import agent
 
 
-#For some reason the display game slows down over time... MP might be necessary
-
-def main():
-    q = Queue(1)
-
+def main(): 
     model = agent()
+    q = Queue(1)
+    lock = Lock()
 
-    train_agent = Thread(target=model.train, args=(q,))
-    display_game = Thread(target=run, args=(q,))
-
-    # train_agent = Process(target=model.train, args=(q,))
-    # display_game = Process(target=run, args=(q,))
+    train_agent = Thread(target=model.train, args=(q, lock))
+    display_game = Thread(target=run, args=(q, lock))
 
     print("[*]Thread 1: Starting agent training")
     train_agent.start()
@@ -28,6 +21,6 @@ def main():
     display_game.start()
 
     train_agent.join()
-    display_game.join()
+    display_game.join() #implement exit flag
 
 main()

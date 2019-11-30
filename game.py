@@ -7,6 +7,8 @@ import pygame
 import random
 from pygame import *
 
+from copy import deepcopy
+
 pygame.mixer.pre_init(44100,  -16,  2,  2048) # fix audio delay 
 pygame.init()
 
@@ -312,7 +314,7 @@ class Scoreboard():
             self.temprect.left += self.temprect.width
         self.temprect.left = 0
 
-def gameplay(agent_queue):
+def gameplay(queue, lock, v):
     global high_score
     gamespeed = 4
     gameOver = False
@@ -348,9 +350,11 @@ def gameplay(agent_queue):
     obstacles = []
     action = 0
 
-    print("[*]Thread 2: Waiting for agent")
-    a, iters, last = agent_queue.get()
-    print("[*]Thread 2: Agent received")
+    if v: print("[*]Thread 2: Waiting for agent")
+    lock.acquire()
+    a, iters, finished = queue.get()
+    lock.release()
+    if v: print("[*]Thread 2: Agent received {}".format([a, iters, finished]))
 
     while not gameOver:
         
@@ -461,14 +465,16 @@ def gameplay(agent_queue):
 
         counter = (counter + 1)
 
-    if last: #agent is done training
-        print("[+]Thread 2: Flag received, exiting")
+    if finished: #agent is done training
+        if v: 
+            print("finished = {}".format(finished))
+            print("[+]Thread 2: Flag received, exiting")
         pygame.quit()
         return False
 
     return True
 
 
-def run(agent_queue):
+def run(queue, lock, v=True):
     flag = True
-    while flag: flag = gameplay(agent_queue)
+    while flag: flag = gameplay(queue, lock, v)

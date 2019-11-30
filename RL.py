@@ -19,30 +19,37 @@ class agent():
         self.env = environment()
         self.Q = av_function(self.alpha)
 
-    def train(self, queue, num_iters=5000):
+
+    def train(self, queue, lock, v=True, num_iters=5000):
         
         for i in range(num_iters+1):
-            #print("Iteration: {}".format(i))
+            if v: print("[*]Thread 1: Iteration: {}".format(i))
 
-            if i % 25 == 0:
-                print("[*]Thread 1: Updating agent queue {}".format([self, i, False]))
-                if queue.full(): queue.get_nowait() #Empties queue
+            if i % 10 == 0:
+                if v: print("[*]Thread 1: Updating agent queue {}".format([self, i, False]))
+                lock.acquire()
+                while queue.full(): queue.get_nowait() #Empties queue
                 queue.put([self, i, False]) #Provides the display game function with the latest agent
+                lock.release()
 
-            state, _, _ = self.env.step(0) #Sets initial state
+            state, _, done = self.env.step(0) #Sets initial state
             #print(self.history)
             self.history = np.zeros(3)
 
-            done = False
-
             while not done:
                 action = self.choose_action(state)
-                state2, reward, done = self.env.step(action)
 
                 #Doesn't train for every step
-                for _ in range(20): 
-                    if action == 1: self.env.step(0)
-                    else: self.env.step(action)
+                r = 0
+                for i in range(20):
+                    if action == 1: 
+                        state2, reward, done = self.env.step(1)
+                        action = 0
+                    else: state2, reward, done = self.env.step(action)
+
+                    r += reward
+                    if done: break
+
 
                 #print(self.gamma * self.max_val(state2))
                 self.Q.train(state, (action - 1.0), reward + (self.gamma * self.max_val(state2)))
@@ -58,9 +65,11 @@ class agent():
 
         input("\nPress ENTER to continue\n")
 
-        print("[+]Thread 1: Training finished, signaling display {}".format([self, num_iters, True]))
-        if queue.full(): queue.get_nowait()
+        if v: print("[+]Thread 1: Training finished, signaling display {}".format([self, num_iters, True]))
+        lock.acquire()
+        while queue.full(): queue.get_nowait()
         queue.put([self, num_iters, True])
+        lock.release()
 
 
     def choose_action(self, state):
@@ -117,4 +126,3 @@ class av_function():
     def model_summary(self):
         print("\nValue function approximator:")
         self.model.summary()
-    

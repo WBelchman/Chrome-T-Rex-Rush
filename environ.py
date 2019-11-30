@@ -87,7 +87,7 @@ class Dino():
 
 class Cactus():
     def __init__(self, speed=5, size=random.randint(0 ,1)):
-        if size: self.rect = load_sprite_sheet('cacti-big')
+        if size == 1: self.rect = load_sprite_sheet('cacti-big')
         else: self.rect = load_sprite_sheet('cacti-small')
         self.rect.bottom = int(0.98 * height)
         self.rect.left = width + self.rect.width
@@ -101,7 +101,7 @@ class Ptera():
     def __init__(self, speed=5):
         self.rect = load_sprite_sheet('ptera')
         self.ptera_height = [height*0.82, height*0.75, height*0.60]
-        self.rect.centery = self.ptera_height[random.randrange(0, 3)]
+        self.rect.centery = self.ptera_height[random.randint(0, 2)]
         self.rect.left = width + self.rect.width
         self.movement = [-1 * speed, 0]
 
@@ -126,7 +126,7 @@ class game():
     def step(self, action):
         gameOver = False
         reward = 0
-
+        
         #Action == 0 is idle
         if action == 1: #Jumping
             if self.playerDino.rect.bottom == int(0.98*height):
