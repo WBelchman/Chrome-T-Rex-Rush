@@ -11,52 +11,47 @@ class agent():
     epsilon = 0.8
     decay_epsilon = 0.995
     min_epsilon = 0.1
-    gamma = 0.99
+    gamma = 0.5
     alpha = 0.01
 
     def __init__(self):
         self.history = np.zeros(3)
-        self.env = environment()
         self.Q = av_function(self.alpha)
 
-
-    def train(self, queue, lock, v=True, num_iters=5000):
-        
+    def train(self, queue, v=True, num_iters=5000):
         for i in range(num_iters+1):
-            if v: print("[*]Thread 1: Iteration: {}".format(i))
 
-            if i % 10 == 0:
+            if v and i % 10 == 0: 
+                print("[*]Thread 1: Iteration: {}".format(i))
+
+            if i % 100 == 0:
                 if v: print("[*]Thread 1: Updating agent queue {}".format([self, i, False]))
-                lock.acquire()
                 while queue.full(): queue.get_nowait() #Empties queue
                 queue.put([self, i, False]) #Provides the display game function with the latest agent
-                lock.release()
 
-            state, _, done = self.env.step(0) #Sets initial state
+            env = environment()
+            state, _, done = env.step(0) #Sets initial state
             #print(self.history)
             self.history = np.zeros(3)
 
             while not done:
                 action = self.choose_action(state)
-
-                #Doesn't train for every step
+            
+                #Doesn"t train for every step
                 r = 0
-                for i in range(20):
-                    if action == 1: 
-                        state2, reward, done = self.env.step(1)
+                for i2 in range(20):
+                    if action == 1:
+                        state2, reward, done = env.step(1)
                         action = 0
-                    else: state2, reward, done = self.env.step(action)
+                    else: state2, reward, done = env.step(action)
 
                     r += reward
                     if done: break
-
 
                 #print(self.gamma * self.max_val(state2))
                 self.Q.train(state, (action - 1.0), reward + (self.gamma * self.max_val(state2)))
 
                 state = state2
-
-            self.env.reset()
 
             if self.epsilon <= self.min_epsilon:
                 self.epsilon = self.min_epsilon
@@ -66,10 +61,8 @@ class agent():
         input("\nPress ENTER to continue\n")
 
         if v: print("[+]Thread 1: Training finished, signaling display {}".format([self, num_iters, True]))
-        lock.acquire()
         while queue.full(): queue.get_nowait()
         queue.put([self, num_iters, True])
-        lock.release()
 
 
     def choose_action(self, state):
@@ -100,8 +93,8 @@ class av_function():
 
     def build_nn(self):
         model = keras.Sequential()
-        model.add(keras.layers.Dense(25, activation=tf.nn.tanh, kernel_initializer='random_uniform', input_dim=3))
-        model.add(keras.layers.Dense(1, activation=tf.nn.relu, kernel_initializer='random_uniform'))
+        model.add(keras.layers.Dense(25, activation=tf.nn.tanh, kernel_initializer="random_uniform", input_dim=3))
+        model.add(keras.layers.Dense(1, activation=tf.nn.relu, kernel_initializer="random_uniform"))
 
         optimizer = keras.optimizers.SGD(lr = self.alpha)
         model.compile(loss="mean_squared_error", optimizer=optimizer, metrics=["mean_squared_error"])
@@ -126,3 +119,10 @@ class av_function():
     def model_summary(self):
         print("\nValue function approximator:")
         self.model.summary()
+
+
+if __name__ == "__main__":
+    from queue import Queue
+    q = Queue(1)
+    a = agent()
+    a.train(q)

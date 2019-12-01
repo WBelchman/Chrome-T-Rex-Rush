@@ -1,4 +1,4 @@
-import random
+from random import randrange
 
 width, height = 600, 150
 gravity = 0.6
@@ -40,12 +40,15 @@ def collision(left, right):
     else: 
         return False
 
-def load_sprite_sheet(sheetname):
-    sprites_dict = {'dino': [147, 440], 'dino_ducking': [79, 236],
-                    'cacti-small': [68, 204], 'cacti-big': [101, 303], 
-                    'ptera': [61, 184]}
+sprites_dict = {'dino': [147, 440], 'dino_ducking': [79, 236],
+                'cacti-small': [68, 204], 'cacti-big': [101, 303], 
+                'ptera': [61, 184]}
 
-    return rect_sub(0, 0, sprites_dict[sheetname][0], sprites_dict[sheetname][1])
+def load_sprite_sheet(sheetname):
+    sprite = sprites_dict[sheetname]
+    rect = rect_sub(0, 0, sprite[0], sprite[1])
+
+    return rect
 
 
 class Dino():
@@ -86,7 +89,7 @@ class Dino():
 
 
 class Cactus():
-    def __init__(self, speed=5, size=random.randint(0 ,1)):
+    def __init__(self, speed=5, size=randrange(0, 1)):
         if size == 1: self.rect = load_sprite_sheet('cacti-big')
         else: self.rect = load_sprite_sheet('cacti-small')
         self.rect.bottom = int(0.98 * height)
@@ -101,7 +104,7 @@ class Ptera():
     def __init__(self, speed=5):
         self.rect = load_sprite_sheet('ptera')
         self.ptera_height = [height*0.82, height*0.75, height*0.60]
-        self.rect.centery = self.ptera_height[random.randint(0, 2)]
+        self.rect.centery = self.ptera_height[randrange(0, 3)]
         self.rect.left = width + self.rect.width
         self.movement = [-1 * speed, 0]
 
@@ -154,17 +157,17 @@ class game():
 
             else:
                 for l in self.obstacles:
-                    if l.rect.right < width*0.7 and random.randrange(0, 50) == 10:
+                    if l.rect.right < width*0.7 and randrange(0, 50) == 10:
                         c = Cactus(self.gamespeed)
                         self.num_cacti += 1
                         self.obstacles.append(c)
 
-        if self.num_pteras == 0 and random.randrange(0, 200) == 10 and self.counter > 500:
-            for l in self.obstacles:
-                if l.rect.right < width*0.8:
-                    p = Ptera(self.gamespeed)
-                    self.num_pteras += 1
-                    self.obstacles.append(p)
+        # if self.num_pteras == 0 and randrange(0, 200) == 10 and self.counter > 500:
+        #     for l in self.obstacles:
+        #         if l.rect.right < width*0.8:
+        #             p = Ptera(self.gamespeed)
+        #             self.num_pteras += 1
+        #             self.obstacles.append(p)
 
 
         self.playerDino.update()
@@ -174,6 +177,8 @@ class game():
         for l in self.obstacles:
             if l.rect.right < 40:
                 self.obstacles.remove(l)
+
+                reward += 10
 
                 if isinstance(l, Cactus):
                     self.num_cacti -= 1
@@ -190,7 +195,7 @@ class game():
         self.counter += 1
 
         if len(self.obstacles) == 0:
-            state = [147, 701]
+            state = [701, 147] #default state
         else:
             last = self.obstacles[0].rect
             state = [last.bottom, last.left]
