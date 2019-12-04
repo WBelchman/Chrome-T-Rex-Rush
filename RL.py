@@ -9,14 +9,14 @@ class agent():
     num_actions=3
 
     epsilon = 0.8
-    decay_epsilon = 0.995
+    decay_epsilon = 0.9995
     min_epsilon = 0.1
     gamma = 0.5
     alpha = 0.01
 
     def __init__(self):
         self.history = np.zeros(3)
-        self.Q = av_function(self.alpha)
+        self.Q = av_function(input_size=3, alpha=self.alpha)
 
     def train(self, queue, v=True, num_iters=5000):
         for i in range(num_iters+1):
@@ -38,20 +38,22 @@ class agent():
                 action = self.choose_action(state)
             
                 #Doesn"t train for every step
-                r = 0
-                for i2 in range(20):
+                reward = 0
+                for _ in range(20):
                     if action == 1:
-                        state2, reward, done = env.step(1)
+                        state2, r, done = env.step(1)
                         action = 0
-                    else: state2, reward, done = env.step(action)
+                    else: state2, r, done = env.step(action)
 
-                    r += reward
+                    reward += r
                     if done: break
 
                 #print(self.gamma * self.max_val(state2))
-                self.Q.train(state, (action - 1.0), reward + (self.gamma * self.max_val(state2)))
+                self.Q.train(state, (action - 1.0), reward + self.gamma * (self.max_val(state2) - self.max_val(state)))
 
                 state = state2
+
+            if v: print("[*]Thread 1 agent: reward: {}, epsilon: {}".format(round(reward, 3), round(self.epsilon, 3)))
 
             if self.epsilon <= self.min_epsilon:
                 self.epsilon = self.min_epsilon
@@ -66,7 +68,6 @@ class agent():
 
 
     def choose_action(self, state):
-
         if (self.epsilon - np.random.uniform()) > 0:
             return np.random.randint(0, self.num_actions)
 
@@ -75,11 +76,10 @@ class agent():
                 l = self.Q.predict(state, a)
 
             #self.history[np.argmax(l)] += 1
-            #print("[*] stdev: {}, epsilon: {}".format(round(np.std(l), 4), round(self.epsilon, 3)))
+            #print("[*]Thread 1 agent: stdev: {}, epsilon: {}".format(round(np.std(l), 4), round(self.epsilon, 3)))
 
             return np.argmax(l)
   
-
     def max_val(self, state):
         l = []
 
@@ -91,9 +91,9 @@ class agent():
 
 class av_function():
 
-    def build_nn(self):
+    def build_nn(self, input_size):
         model = keras.Sequential()
-        model.add(keras.layers.Dense(25, activation=tf.nn.tanh, kernel_initializer="random_uniform", input_dim=3))
+        model.add(keras.layers.Dense(25, activation=tf.nn.tanh, kernel_initializer="random_uniform", input_dim=input_size))
         model.add(keras.layers.Dense(1, activation=tf.nn.relu, kernel_initializer="random_uniform"))
 
         optimizer = keras.optimizers.SGD(lr = self.alpha)
@@ -104,9 +104,9 @@ class av_function():
 
         return model
 
-    def __init__(self, alpha=0.1):
+    def __init__(self, input_size, alpha=0.1):
         self.alpha = alpha
-        self.model = self.build_nn()
+        self.model = self.build_nn(input_size+1)
 
     def train(self, state, action, reward):
         with self.graph.as_default():

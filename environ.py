@@ -178,7 +178,7 @@ class game():
             if l.rect.right < 40:
                 self.obstacles.remove(l)
 
-                reward += 10
+                reward += 5
 
                 if isinstance(l, Cactus):
                     self.num_cacti -= 1
@@ -194,10 +194,13 @@ class game():
 
         self.counter += 1
 
+        reward += self.counter ** (1/2)
+        if gameOver: reward = 0
+
         if len(self.obstacles) == 0:
-            state = [701, 147] #default state
+            state = [self.gamespeed, 701, 147] #default state
         else:
             last = self.obstacles[0].rect
-            state = [last.bottom, last.left]
+            state = [self.gamespeed, last.bottom, last.left]
 
         return state, reward, gameOver

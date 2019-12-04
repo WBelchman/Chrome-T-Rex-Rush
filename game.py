@@ -108,18 +108,6 @@ def load_sprite_sheet(
 
     return sprites, sprite_rect
 
-def disp_gameOver_msg(retbutton_image, gameover_image):
-    retbutton_rect = retbutton_image.get_rect()
-    retbutton_rect.centerx = width / 2
-    retbutton_rect.top = height*0.52
-
-    gameover_rect = gameover_image.get_rect()
-    gameover_rect.centerx = width / 2
-    gameover_rect.centery = height*0.35
-
-    screen.blit(retbutton_image,  retbutton_rect)
-    screen.blit(gameover_image,  gameover_rect)
-
 def extractDigits(number):
     if number > -1:
         digits = []
@@ -360,12 +348,15 @@ def gameplay(queue, v):
 
         if counter % 20 == 0:
 
+            temp_rect = playerDino.rect
+            temp_rect.width = 10
+
             if len(obstacles) == 0: #Nothing to avoid (Consider action=0)
-                state = [147, 701]
+                state = [gamespeed, 701, 147]
                 action = a.choose_action(state) 
             else:
                 last = obstacles[0].rect
-                state = [last.bottom, last.left]
+                state = [gamespeed, last.bottom, last.left]
                 action = a.choose_action(state)
 
         else:
@@ -438,6 +429,7 @@ def gameplay(queue, v):
 
         if pygame.display.get_surface() != None:
             screen.fill(background_col)
+            pygame.draw.rect(screen, (254, 0 ,0), temp_rect)
             new_ground.draw()
             clouds.draw(screen)
             scb.draw()
